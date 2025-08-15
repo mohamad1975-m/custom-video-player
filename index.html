@@ -442,9 +442,17 @@
     loadVideo(0);
     showSpeed(); setTimeout(()=> speedDisplay.style.opacity = 0, 1500);
   })();
+  @media (max-width: 480px) {
+  .episode-label {
+    font-size: 14px; /* کوچک‌تر از حالت دسکتاپ */
+    padding: 4px 8px; /* کم کردن فاصله اطراف متن */
+  }
+}
+
 </script>
 </body>
 </html>
+
 
 
 
