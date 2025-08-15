@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<title>پخش سریال</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  @font-face {
+    font-family: 'IranYekan';
+    src: url('iranyekanweblight.woff') format('woff');
+    font-display: swap;
+  }
+  :root {
+    --bg:#111; --fg:#fff; --card:#222; --muted:#333; --muted-2:#444; --accent:#09f;
+    --btn:#2c2c2c; --btn-hover:#3a3a3a;
+  }
+  .light {
+    --bg:#f6f7fb; --fg:#0d0d0d; --card:#ffffff; --muted:#e8eaf0; --muted-2:#d9dce6; --accent:#0066ff;
+    --btn:#e9ebf3; --btn-hover:#dfe3ee;
+  }
+  * { box-sizing: border-box }
+  body {
+    background: var(--bg); color: var(--fg);
+    font-family: 'IranYekan', system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+    margin: 0; padding: 20px;
+    display: flex; flex-direction: column; align-items: center; gap: 14px;
+  }
+  h1 { margin: 0 0 6px; font-size: 18px; font-weight: 600; text-align: center; }
+
+  .topbar {
+    display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; align-items: center;
+    width: min(92vw, 900px);
+  }
+  .group {
+    display: flex; gap: 8px; align-items: center; background: var(--card);
+    border-radius: 12px; padding: 8px 10px; border: 1px solid var(--muted);
+  }
+  .select {
+    padding: 8px 12px; border-radius: 10px; border: 1px solid var(--muted);
+    background: var(--card); color: var(--fg); font: inherit;
+  }
+
+  /* دکمه‌های آیکون */
+  .icon-btn {
+    width: 36px; height: 36px; min-width: 36px;
+    display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 10px; border: 1px solid var(--muted);
+    background: var(--btn); color: var(--fg); cursor: pointer;
+    padding: 0; position: relative;
+  }
+  .icon-btn:hover { background: var(--btn-hover); }
+  .icon-btn svg { width: 18px; height: 18px; }
+
+  /* Tooltip ساده */
+  .icon-btn[data-tip]:hover::after {
+    content: attr(data-tip);
+    position: absolute; bottom: calc(100% + 8px); right: 50%; transform: translateX(50%);
+    background: rgba(0,0,0,.75); color:#fff; padding: 4px 8px; border-radius: 6px; font-size: 12px; white-space: nowrap;
+    pointer-events: none;
+  }
+
+  .player-wrap {
+    width: min(92vw, 900px);
+    background: var(--card);
+    border-radius: 14px;
+    padding: 14px;
+    box-shadow: 0 10px 30px rgba(0,0,0,.35);
+    position: relative;
+  }
+  video { width: 100%; border-radius: 10px; background: #000; }
+
+  #speedDisplay {
+    position: absolute; top: 12px; right: 50%; transform: translateX(50%);
+    background: rgba(0,0,0,.55); color: #fff; padding: 6px 12px; border-radius: 8px; font-size: 13px;
+    opacity: 0; transition: opacity .25s ease; pointer-events: none;
+  }
+  #timePreview {
+    position: absolute; bottom: 58px; right: 50%; transform: translateX(50%);
+    background: rgba(0,0,0,.6); color:#fff; padding: 4px 8px; border-radius: 6px; font-size: 12px;
+    opacity: 0; transition: opacity .15s ease; pointer-events: none; white-space: nowrap;
+  }
+
+  .download-menu {
+    position: absolute; z-index: 5; top: 14px; left: 14px; background: var(--card);
+    border: 1px solid var(--muted); border-radius: 10px; padding: 8px; display: none;
+    box-shadow: 0 10px 30px rgba(0,0,0,.25);
+  }
+  .download-menu a {
+    display: block; text-decoration: none; color: var(--fg);
+    padding: 6px 8px; border-radius: 6px;
+  }
+  .download-menu a:hover { background: var(--muted); }
+
+  .hint { font-size: 12px; opacity: .7; text-align: center; width: min(92vw, 900px); }
+</style>
+</head>
+<body>
+
+  <h1 id="title">سریال وحشی - قسمت 1</h1>
+
+  <div class="topbar">
+    <!-- گروه انتخاب‌ها -->
+    <div class="group">
+      <label>قسمت:</label>
+      <select id="episodeSelect" class="select"></select>
+      <label style="margin-right:8px">کیفیت:</label>
+      <select id="qualitySelect" class="select">
+        <option value="auto">اتوماتیک</option>
+        <option value="1080">1080p</option>
+        <option value="720">720p</option>
+        <option value="480">480p</option>
+      </select>
+    </div>
+
+    <!-- گروه آیکون‌ها (فشرده) -->
+    <div class="group" id="iconsGroup" style="gap:6px">
+      <!-- دانلود -->
+      <button id="downloadBtn" class="icon-btn" data-tip="دانلود">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+      </button>
+
+      <!-- حالت روز/شب -->
+      <button id="themeBtn" class="icon-btn" data-tip="حالت روز/شب">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </button>
+
+      <!-- PiP -->
+      <button id="pipBtn" class="icon-btn" data-tip="Picture-in-Picture">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="5" width="18" height="14" rx="2"/><rect x="12.5" y="9" width="6" height="5" rx="1"/>
+        </svg>
+      </button>
+
+      <!-- ذخیره بوکمارک -->
+      <button id="saveBm" class="icon-btn" data-tip="ذخیره بوکمارک">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+        </svg>
+      </button>
+
+      <!-- رفتن به بوکمارک -->
+      <button id="gotoBm" class="icon-btn" data-tip="رفتن به بوکمارک">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="9"/><path d="M12 7v10M7 12h10"/>
+        </svg>
+      </button>
+
+      <!-- کاهش سرعت -->
+      <button id="slower" class="icon-btn" data-tip="کاهش سرعت">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+      </button>
+
+      <!-- افزایش سرعت -->
+      <button id="faster" class="icon-btn" data-tip="افزایش سرعت">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="player-wrap" id="playerWrap">
+    <video id="player" controls playsinline></video>
+    <div id="speedDisplay">سرعت: 1x</div>
+    <div id="timePreview">00:00</div>
+
+    <div class="download-menu" id="downloadMenu">
+      <a href="#" data-q="1080" download>دانلود 1080p</a>
+      <a href="#" data-q="720" download>دانلود 720p</a>
+      <a href="#" data-q="480" download>دانلود 480p</a>
+    </div>
+  </div>
+
+  <div class="hint">
+    دوبار کلیک چپ: -۵ ثانیه • دوبار کلیک راست: +۵ ثانیه • دوبار کلیک وسط/ناحیه وسط: پخش/توقف —
+    Space: پخش/توقف • ←/→: ±۵s • ↑/↓: ولوم ±۱۰٪ • M: بی‌صدا • F: تمام‌صفحه • P: PiP
+  </div>
+
+<script>
+  // ----- داده‌ها -----
+  const episodes = [
+    {
+      id: "vahshi-s01e01",
+      title: "سریال وحشی - قسمت 1",
+      links: {
+        1080: "https://dl.blueser.ir/series/Savage/1080p/Vahshi-S01E01-1080p-%E2%86%92[@Blue_ser].mp4",
+        720:  "https://dl.blueser.ir/series/Savage/720p/Vahshi-S01E01-720p-%E2%86%92[@Blue_ser].mp4",
+        480:  "https://dl.blueser.ir/series/Savage/480p/Vahshi-S01E01-480p-%E2%86%92[@Blue_ser].mp4"
+      }
+    }
+  ];
+
+  // ----- المان‌ها -----
+  const episodeSelect = document.getElementById('episodeSelect');
+  const qualitySelect = document.getElementById('qualitySelect');
+  const titleEl = document.getElementById('title');
+  const player = document.getElementById('player');
+  const wrap = document.getElementById('playerWrap');
+
+  const downloadBtn = document.getElementById('downloadBtn');
+  const downloadMenu = document.getElementById('downloadMenu');
+
+  const pipBtn = document.getElementById('pipBtn');
+  const themeBtn = document.getElementById('themeBtn');
+
+  const speedDisplay = document.getElementById('speedDisplay');
+  const timePreview = document.getElementById('timePreview');
+
+  const slowerBtn = document.getElementById('slower');
+  const fasterBtn = document.getElementById('faster');
+  const saveBmBtn = document.getElementById('saveBm');
+  const gotoBmBtn = document.getElementById('gotoBm');
+
+  // ----- وضعیت -----
+  let currentEpisode = 0;
+  let currentQuality = "auto";
+  const playbackRates = [0.5, 0.75, 1, 1.25, 1.5, 2, 2.5, 3];
+  let rateIndex = 2;
+  let autoInterval = null;
+
+  // ----- ابزار -----
+  const formatTime = (sec) => {
+    if (!isFinite(sec)) return "00:00";
+    sec = Math.max(0, Math.floor(sec));
+    const h = Math.floor(sec/3600);
+    const m = Math.floor((sec%3600)/60);
+    const s = sec%60;
+    return (h>0 ? String(h).padStart(2,'0') + ":" : "")
+      + String(m).padStart(2,'0') + ":" + String(s).padStart(2,'0');
+  };
+
+  const showSpeed = () => {
+    speedDisplay.textContent = `سرعت: ${playbackRates[rateIndex]}x`;
+    speedDisplay.style.opacity = 1;
+    clearTimeout(showSpeed._t);
+    showSpeed._t = setTimeout(()=> speedDisplay.style.opacity = 0, 1800);
+  };
+
+  const chooseQualityByNet = () => {
+    const mbps = (navigator.connection && navigator.connection.downlink) ? navigator.connection.downlink : 5;
+    if (mbps > 4) return "1080";
+    if (mbps > 2) return "720";
+    return "480";
+  };
+
+  const loadVideo = (keepTime = 0) => {
+    const ep = episodes[currentEpisode];
+    titleEl.textContent = ep.title;
+
+    let q = currentQuality === "auto" ? chooseQualityByNet() : currentQuality;
+    const src = ep.links[q];
+
+    player.src = src;
+    player.playbackRate = playbackRates[rateIndex];
+
+    if (keepTime > 0) {
+      player.addEventListener('loadedmetadata', function jump() {
+        player.currentTime = Math.min(keepTime, player.duration || keepTime);
+        player.removeEventListener('loadedmetadata', jump);
+        player.play().catch(()=>{});
+      });
+    } else {
+      player.play().catch(()=>{});
+    }
+
+    // لینک‌های دانلود
+    [...downloadMenu.querySelectorAll('a[data-q]')].forEach(a=>{
+      const qq = a.getAttribute('data-q');
+      a.href = ep.links[qq];
+      a.setAttribute('download', `${ep.title}-${qq}.mp4`);
+    });
+
+    if (autoInterval) clearInterval(autoInterval);
+    if (currentQuality === "auto") {
+      autoInterval = setInterval(()=>{
+        if (qualitySelect.value !== "auto") return;
+        const best = chooseQualityByNet();
+        const want = ep.links[best];
+        if (!player.src.endsWith(encodeURI(want)) && !player.src.endsWith(want)) {
+          const t = player.currentTime;
+          player.src = want;
+          player.addEventListener('loadedmetadata', function jump2() {
+            player.currentTime = Math.min(t, player.duration || t);
+            player.removeEventListener('loadedmetadata', jump2);
+            player.play().catch(()=>{});
+          });
+        }
+      }, 8000);
+    }
+  };
+
+  // ----- پر کردن لیست قسمت‌ها -----
+  episodes.forEach((ep, i)=>{
+    const opt = document.createElement('option');
+    opt.value = String(i);
+    opt.textContent = ep.title;
+    episodeSelect.appendChild(opt);
+  });
+
+  // ----- رویدادها -----
+  episodeSelect.addEventListener('change', ()=>{
+    currentEpisode = parseInt(episodeSelect.value, 10);
+    loadVideo(0);
+  });
+
+  qualitySelect.addEventListener('change', ()=>{
+    currentQuality = qualitySelect.value;
+    const t = player.currentTime || 0;
+    loadVideo(t);
+  });
+
+  // دانلود: منوی کوچک
+  downloadBtn.addEventListener('click', (e)=>{
+    e.stopPropagation();
+    downloadMenu.style.display = (downloadMenu.style.display === 'block') ? 'none' : 'block';
+  });
+  document.addEventListener('click', ()=> downloadMenu.style.display = 'none');
+
+  // PiP
+  pipBtn.addEventListener('click', async ()=>{
+    try {
+      if (document.pictureInPictureElement) await document.exitPictureInPicture();
+      else if (document.pictureInPictureEnabled) await player.requestPictureInPicture();
+    } catch(_) {}
+  });
+
+  // تم
+  themeBtn.addEventListener('click', ()=> document.body.classList.toggle('light'));
+
+  // سرعت
+  slowerBtn.addEventListener('click', ()=>{
+    if (rateIndex > 0) rateIndex--;
+    player.playbackRate = playbackRates[rateIndex];
+    showSpeed();
+  });
+  fasterBtn.addEventListener('click', ()=>{
+    if (rateIndex < playbackRates.length - 1) rateIndex++;
+    player.playbackRate = playbackRates[rateIndex];
+    showSpeed();
+  });
+
+  // بوکمارک
+  const bmKey = () => `bm:${episodes[currentEpisode].id}`;
+  saveBmBtn.addEventListener('click', ()=>{
+    localStorage.setItem(bmKey(), String(Math.floor(player.currentTime || 0)));
+    saveBmBtn.setAttribute('data-tip','ذخیره شد!');
+    setTimeout(()=> saveBmBtn.setAttribute('data-tip','ذخیره بوکمارک'), 1200);
+  });
+  gotoBmBtn.addEventListener('click', ()=>{
+    const v = parseInt(localStorage.getItem(bmKey())||"0", 10);
+    if (v>0) {
+      player.currentTime = v;
+      player.play().catch(()=>{});
+    } else {
+      gotoBmBtn.setAttribute('data-tip','بوکمارکی نیست');
+      setTimeout(()=> gotoBmBtn.setAttribute('data-tip','رفتن به بوکمارک'), 1200);
+    }
+  });
+
+  // شورتکات‌ها
+  document.addEventListener('keydown', (e)=>{
+    const tag = e.target.tagName.toLowerCase();
+    if (tag === 'input' || tag === 'textarea' || e.altKey || e.ctrlKey || e.metaKey) return;
+
+    if (e.code === 'Space') {
+      e.preventDefault();
+      player.paused ? player.play() : player.pause();
+    } else if (e.key === 'ArrowRight') {
+      player.currentTime = Math.min(player.currentTime + 5, player.duration || Infinity);
+    } else if (e.key === 'ArrowLeft') {
+      player.currentTime = Math.max(player.currentTime - 5, 0);
+    } else if (e.key === 'ArrowUp') {
+      player.volume = Math.min(player.volume + 0.1, 1);
+    } else if (e.key === 'ArrowDown') {
+      player.volume = Math.max(player.volume - 0.1, 0);
+    } else if (e.key.toLowerCase() === 'm') {
+      player.muted = !player.muted;
+    } else if (e.key.toLowerCase() === 'f') {
+      if (!document.fullscreenElement) wrap.requestFullscreen?.();
+      else document.exitFullscreen?.();
+    } else if (e.key.toLowerCase() === 'p') {
+      pipBtn.click();
+    }
+  });
+
+  // دوبارکلیک‌ها
+  player.addEventListener('dblclick', (e)=>{
+    e.preventDefault();
+    const rect = player.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const third = rect.width / 3;
+    if (x < third) {
+      player.currentTime = Math.max(player.currentTime - 5, 0);
+    } else if (x > third*2) {
+      player.currentTime = Math.min(player.currentTime + 5, player.duration || Infinity);
+    } else {
+      player.paused ? player.play() : player.pause();
+    }
+  });
+
+  // dblclick وسط
+  let midClickTime = 0;
+  player.addEventListener('mousedown', (e)=>{
+    if (e.button !== 1) return;
+    const now = performance.now();
+    if (now - midClickTime < 320) {
+      player.paused ? player.play() : player.pause();
+      midClickTime = 0;
+    } else { midClickTime = now; }
+  });
+
+  // پیش‌نمایش زمان
+  const showTimePreview = (e)=>{
+    if (!isFinite(player.duration)) return;
+    const rect = player.getBoundingClientRect();
+    const ratio = Math.min(Math.max((e.clientX - rect.left)/rect.width, 0), 1);
+    const t = ratio * player.duration;
+    timePreview.textContent = `پیش‌نمایش: ${formatTime(t)}`;
+    timePreview.style.opacity = 1;
+    timePreview.style.right = `${100 - ratio*100}%`;
+  };
+  const hideTimePreview = ()=> { timePreview.style.opacity = 0; };
+  player.addEventListener('mousemove', showTimePreview);
+  player.addEventListener('mouseleave', hideTimePreview);
+  player.addEventListener('touchmove', (e)=>{
+    if (!e.touches?.length) return;
+    const touch = e.touches[0];
+    showTimePreview({ clientX: touch.clientX, clientY: touch.clientY });
+  }, {passive:true});
+  player.addEventListener('touchend', hideTimePreview);
+
+  // شروع
+  (function init(){
+    episodeSelect.value = String(currentEpisode);
+    qualitySelect.value = currentQuality;
+    loadVideo(0);
+    showSpeed(); setTimeout(()=> speedDisplay.style.opacity = 0, 1500);
+  })();
+</script>
+</body>
+</html>
+
+
+
