@@ -5,6 +5,19 @@
 <title>پخش سریال</title>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <style>
+  @media (max-width: 480px) {
+  .episode-label {
+    font-size: 14px !important;
+    padding: 4px 8px !important;
+  }
+
+  /* اگه دکمه‌ها یا منو هم زیادی بزرگ بودن، اینا رو هم کم می‌کنیم */
+  .control-button {
+    font-size: 14px !important;
+    padding: 6px !important;
+  }
+}
+
   @font-face {
     font-family: 'IranYekan';
     src: url('iranyekanweblight.woff') format('woff');
@@ -92,6 +105,7 @@
   .download-menu a:hover { background: var(--muted); }
 
   .hint { font-size: 12px; opacity: .7; text-align: center; width: min(92vw, 900px); }
+
 </style>
 </head>
 <body>
@@ -442,17 +456,9 @@
     loadVideo(0);
     showSpeed(); setTimeout(()=> speedDisplay.style.opacity = 0, 1500);
   })();
-  @media (max-width: 480px) {
-  .episode-label {
-    font-size: 14px; /* کوچک‌تر از حالت دسکتاپ */
-    padding: 4px 8px; /* کم کردن فاصله اطراف متن */
-  }
-}
-
 </script>
 </body>
 </html>
-
 
 
 
