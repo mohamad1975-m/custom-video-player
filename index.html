@@ -1,18 +1,156 @@
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <title>دانلودگر HLS</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <title>تولید دستور دانلود MP4</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    @font-face{
+      font-family: 'IRANYekanX';
+      src: url('https://s34.picofile.com/d/8486538992/57043c3b-32ae-41ae-8bf1-89fc12a9b1d0/IRANYekanX_Light_woff2') format('woff2');
+      font-weight: 300; font-style: normal; font-display: swap;
+    }
+    body { background:#0e1116; color:#e9edf3; font-family:IRANYekanX, sans-serif; margin:0; padding:0; }
+    .container{ max-width:900px; margin:40px auto; padding:0 16px; }
+    .card{ background:#171b22; border:1px solid #242a36; border-radius:16px; padding:20px; box-shadow:0 10px 30px rgba(0,0,0,.35); margin-bottom:30px; }
+    h1{ font-size:22px; margin:0 0 14px; }
+    h2{ font-size:18px; margin:20px 0 10px; }
+    p{ color:#9aa3af; line-height:1.8; margin:0 0 8px; }
+    .hint{ background:#10141c; border:1px dashed #2a3242; padding:14px; border-radius:12px; margin:14px 0; }
+    .row{ display:grid; grid-template-columns:1fr auto; gap:10px; margin-top:14px; }
+    input{ width:100%; background:#212734; color:#e9edf3; border:1px solid #2a3242; border-radius:12px; padding:12px 14px; font-size:15px; }
+    .btn{ background:#64d2ff; color:#001018; border:none; border-radius:12px; padding:12px 18px; font-size:15px; font-weight:700; cursor:pointer; }
+    .btn.secondary{ background:#212734; color:#e9edf3; border:1px solid #2a3242; }
+    .btn.red{ background:#ff6b6b; color:#1a0000; }
+    .btn.green{ background:#00d3a7; color:#001410; text-decoration:none; display:inline-block; }
+    .output-wrap{ margin-top:16px; background:#0b0e14; border:1px solid #232a38; border-radius:14px; overflow:hidden; display:none; }
+    .output-head{ display:flex; justify-content:space-between; align-items:center; padding:10px 12px; border-bottom:1px solid #232a38; background:#0f141d; }
+    pre{ margin:0; padding:14px; direction:ltr; text-align:left; font-size:13px; color:#b9f6ca; max-height:360px; overflow:auto; }
+    .muted{ color:#9aa3af; font-size:13px; }
+    ul{ margin:8px 0; padding:0 18px; }
+    li{ margin:6px 0; }
+    .divider{ height:1px; background:#232a38; margin:20px 0; }
+  </style>
 </head>
 <body>
   <div class="container">
-    <h2>🎥 دانلودگر ویدیو</h2>
-    <p>لینک m3u8 را وارد کنید:</p>
-    <input type="text" id="m3u8" placeholder="https://.../index-v1-a1.m3u8">
-    <button onclick="startDownload()">دانلود</button>
-    <p id="status"></p>
+
+    <!-- === تولیدکننده اول === -->
+    <div class="card">
+      <h1>تولید دستور از لینک درس</h1>
+      <div class="hint">
+        <p><b>راهنما:</b></p>
+        <ul>
+          <li>فقط <b>لینک صفحهٔ درس</b> را بده؛ مثل: <code>https://www.harfeakhar.tv/education/lesson/9XH9qG</code></li>
+          <li>ابزار خودش لینک <code>index-v1-a1.m3u8</code> را می‌سازد.</li>
+          <li>مطمئن شو <b>ffmpeg.exe</b> آماده است (اگر نداری: <a class="btn green" href="https://www.gyan.dev/ffmpeg/builds/packages/ffmpeg-8.0-essentials_build.zip" target="_blank">دانلود ffmpeg.exe</a>)</li>
+        </ul>
+      </div>
+      <div class="row">
+        <input id="lessonUrl" type="text" placeholder="https://www.harfeakhar.tv/education/lesson/9XH9qG">
+        <button class="btn" onclick="generate1()">ساخت دستور</button>
+      </div>
+      <div class="output-wrap" id="outwrap1">
+        <div class="output-head">
+          <b>اسکریپت CMD</b>
+          <div>
+            <button class="btn secondary" onclick="copyOut('output1')">کپی</button>
+            <button class="btn red" onclick="clearOut('outwrap1','output1')">پاک</button>
+          </div>
+        </div>
+        <pre id="output1"></pre>
+      </div>
+    </div>
+
+    <!-- === تولیدکننده دوم === -->
+    <div class="card">
+      <h2>اگر اولی کار نکرد: استفاده از لینک m3u8</h2>
+      <div class="hint">
+        <p><b>راهنمای گرفتن لینک m3u8:</b></p>
+        <ul>
+          <li>در صفحه درس، کلید <b>F12</b> را بزن (بخش Inspect).</li>
+          <li>روی تب <b>Network</b> کلیک کن و ویدیو را پخش کن.</li>
+          <li>در لیست Network، روی <b>index-v1-a1.m3u8</b> راست‌کلیک کن → <b>Copy → Copy URL</b>.</li>
+          <li>لینک کپی‌شده را اینجا بچسبان.</li>
+          <li>مطمئن شو <b>ffmpeg.exe</b> آماده است (اگر نداری: <a class="btn green" href="https://www.gyan.dev/ffmpeg/builds/packages/ffmpeg-8.0-essentials_build.zip" target="_blank">دانلود ffmpeg.exe</a>)</li>
+        </ul>
+      </div>
+      <div class="row">
+        <input id="m3u8Url" type="text" placeholder="https://81-cdn.harfeakhar.tv/hls/FkdK6d-9XH9qG/index-v1-a1.m3u8">
+        <button class="btn" onclick="generate2()">ساخت دستور</button>
+      </div>
+      <div class="output-wrap" id="outwrap2">
+        <div class="output-head">
+          <b>اسکریپت CMD</b>
+          <div>
+            <button class="btn secondary" onclick="copyOut('output2')">کپی</button>
+            <button class="btn red" onclick="clearOut('outwrap2','output2')">پاک</button>
+          </div>
+        </div>
+        <pre id="output2"></pre>
+      </div>
+    </div>
+
   </div>
-  <script src="script.js"></script>
+
+  <script>
+    const KEY_DECIMALS = [227,105,133,61,247,102,250,68,225,237,15,246,19,245,99,189];
+    const IV_HEX = "00000000000000000000000000000001";
+
+    // دستور ساز مشترک
+    function buildCmd(m3u8Url, outName){
+      const keyBytes = KEY_DECIMALS.join(", ");
+      return [
+        'REM ===== تنظیم =====',
+        `SET "M3U8=${m3u8Url}"`,
+        `SET "OUT=${outName}"`,
+        '',
+        'curl -L "%M3U8%" -o list.m3u8',
+        `powershell -NoProfile -Command "$b=@(${keyBytes}); [IO.File]::WriteAllBytes('local.key',[byte[]]$b)"`,
+        `powershell -NoProfile -Command "$p=Get-Content 'list.m3u8'; $k='#EXT-X-KEY:METHOD=AES-128,URI=\\"local.key\\",IV=0x${IV_HEX}'; $p=($p -replace '^#EXT-X-KEY:.*$',$k) -join [Environment]::NewLine; [IO.File]::WriteAllText('list.m3u8',$p)"`,
+        '.\\ffmpeg.exe -allowed_extensions ALL -protocol_whitelist "file,http,https,tcp,tls,crypto" -i list.m3u8 -c copy -bsf:a aac_adtstoasc "%OUT%"',
+        '',
+        'REM ✅ پایان کار'
+      ].join("\r\n");
+    }
+
+    // تولیدکننده اول
+    function generate1(){
+      const url = document.getElementById('lessonUrl').value.trim();
+      if(!url) return alert("لینک درس را وارد کنید");
+      try{
+        const id = url.split("/").filter(Boolean).pop();
+        const m3u8 = `https://81-cdn.harfeakhar.tv/hls/FkdK6d-${id}/index-v1-a1.m3u8`;
+        const cmd = buildCmd(m3u8, id+".mp4");
+        document.getElementById('output1').textContent = cmd;
+        document.getElementById('outwrap1').style.display = "block";
+      }catch{ alert("لینک معتبر نیست"); }
+    }
+
+    // تولیدکننده دوم (کد سالم تست‌شده)
+    function generate2(){
+      const url = document.getElementById('m3u8Url').value.trim();
+      if(!url) return alert("لینک m3u8 را وارد کنید");
+      try{
+        const parts = new URL(url).pathname.split("/").filter(Boolean);
+        const folder = parts[parts.length-2] || "video";
+        const outName = folder + ".mp4";
+        const cmd = buildCmd(url, outName);
+        document.getElementById('output2').textContent = cmd;
+        document.getElementById('outwrap2').style.display = "block";
+      }catch{ alert("لینک معتبر نیست"); }
+    }
+
+    // کپی/پاک
+    async function copyOut(id){
+      const txt = document.getElementById(id).textContent;
+      try{ await navigator.clipboard.writeText(txt); alert("کپی شد ✓"); }
+      catch{ alert("کپی نشد، دستی کپی کنید"); }
+    }
+    function clearOut(wrapId, outId){
+      document.getElementById(outId).textContent="";
+      document.getElementById(wrapId).style.display="none";
+    }
+  </script>
 </body>
 </html>
