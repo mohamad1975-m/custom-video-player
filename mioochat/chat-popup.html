@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>چت‌بات — Pop-up</title>
+  <style>
+    @font-face {
+      font-family: 'IRANYekanX';
+      src: url('https://s34.picofile.com/file/8486538992/IRANYekanX_Light_woff2.html') format('woff2');
+      font-weight: 300; font-style: normal; font-display: swap;
+    }
+    body{ margin:0; font-family:'IRANYekanX', Tahoma, sans-serif; background:#0f172a; color:#e5e7eb; }
+    .center{ display:flex; align-items:center; justify-content:center; min-height:100vh; }
+    .btn{ background:#22c55e; color:#062; border:0; border-radius:999px; padding:12px 18px; font-size:14px; cursor:pointer; }
+    .hint{ text-align:center; color:#9ca3af; font-size:12px; margin-top:10px; }
+  </style>
+  <script async type="module" src="https://interfaces.zapier.com/assets/web-components/zapier-interfaces/zapier-interfaces.esm.js"></script>
+</head>
+<body>
+  <div class="center">
+    <button class="btn" onclick="document.querySelector('zapier-interfaces-chatbot-embed').open()">باز کردن چت</button>
+  </div>
+  <zapier-interfaces-chatbot-embed is-popup="true" chatbot-id="cm1md41aa0009jr5y1g37r8k3"></zapier-interfaces-chatbot-embed>
+  <div class="hint">اگر پاپ‌آپ باز نشد، دامنهٔ میزبان باید در Allowed domains لیست شود.</div>
+</body>
+</html>
